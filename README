@@ -40,7 +40,7 @@
 
   To upload a new program, run:
 
-    ./load  -f <HEX file> -p <serial port>
+    ./load -f <HEX file> -p <serial port>
 
   To execute the previously uploaded program, run:
 
