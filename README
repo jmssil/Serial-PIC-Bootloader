@@ -1,0 +1,56 @@
+0. Contents
+
+  - bootloader.X: MPLABX project for bootloader (PIC side)
+  - bootloader: Eclipse project for loader (PC side)
+
+1. Caveats
+
+  The bootloader.X project is prepared for PIC18F26J50, but should run
+  on similar PICs with minimum changes. The bootloader is restrained
+  to ROM addresses 0x0000 to 0x0fff. The guest program should be
+  restricted to ROM addresses 0x1000 to 0xffff, with code offset
+  0x1000.
+
+2. Relocate guest program
+
+  See "Linking PIC18 Bootloaders & Applications"
+  (http://www.microchip.com/stellent/groups/sitecomm_sg/documents/devicedoc/en558478.pdf).
+
+  Steps:
+    1. project properties
+    2. xc8 linker
+    3. memory model, ROM ranges = 1000-ffff
+    4. additional options, code offset = 1000
+
+3. PIC side
+
+  - make and program "bootloader" project (with Pickit)
+  - LED1 (configure for your PIC/board) should indicate the bootloader is ready
+  - LED2 will light when receiving the guest program
+
+4. Guest program
+
+  Compile your guest program. This produces an Intel HEX file
+  (http://en.wikipedia.org/wiki/Intel_HEX) located under
+  "dist/default/production".
+
+5. PC side
+
+  Compile loader with "scons".
+
+  To upload a new program, run:
+
+    ./load  -f <HEX file> -p <serial port>
+
+  To execute the previously uploaded program, run:
+
+    ./load -x -p <serial port>
+
+6. Pitfalls
+
+  Host and guest programs should/must have compatible configuration
+  bits, mostly because the UART configuration must be kept.
+
+7. Contact for questions, suggestions, etc.
+
+  João M. S. Silva, joao.m.santos.silva@gmail.com
