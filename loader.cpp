@@ -1,20 +1,26 @@
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <tclap/ArgException.h>
 #include <tclap/CmdLine.h>
 #include <tclap/SwitchArg.h>
 #include <tclap/ValueArg.h>
 #include <termios.h>
 #include <unistd.h>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
+
+#include "states.h"
 
 int main(int argc, char *argv[]) {
 	/* parse command-line options */
 	std::string port;
 	std::string file;
 	bool run;
+	bool reboot;
+	bool debug;
+	std::vector<TCLAP::Arg*> xorList;
 	try {
 		TCLAP::CmdLine cmd("PIC bootloader loader", ' ', "0.1");
 		TCLAP::ValueArg<std::string> port_arg("p", "port", "PIC serial port",
@@ -22,13 +28,20 @@ int main(int argc, char *argv[]) {
 		cmd.add(port_arg);
 		TCLAP::ValueArg<std::string> file_arg("f", "file", "HEX file", false,
 				"", "HEX file");
-		cmd.add(file_arg);
-		TCLAP::SwitchArg run_arg("x", "run", "Run code", false);
-		cmd.add(run_arg);
+		xorList.push_back(&file_arg);
+		TCLAP::SwitchArg run_arg("x", "run", "Run program", false);
+		xorList.push_back(&run_arg);
+		TCLAP::SwitchArg reboot_arg("r", "reboot", "Reboot PIC", false);
+		xorList.push_back(&reboot_arg);
+		cmd.xorAdd(xorList);
+		TCLAP::SwitchArg debug_arg("d", "debug", "Print debug messages", false);
+		cmd.add(debug_arg);
 		cmd.parse(argc, argv);
 		port = port_arg.getValue();
 		file = file_arg.getValue();
 		run = run_arg.getValue();
+		reboot = reboot_arg.getValue();
+		debug = debug_arg.getValue();
 	} catch (TCLAP::ArgException &e) {
 		std::cerr << "error: " << e.error() << " for arg " << e.argId()
 				<< std::endl;
@@ -59,11 +72,23 @@ int main(int argc, char *argv[]) {
 	char c;
 	if (run) {
 		/* execute previously loaded program */
-		c = 'x';
+		c = STATE_BOOT;
 		write(fd, &c, 1);
 		read(fd, &c, 1);
 		printf("run status = %c\n", c);
+	} else if (reboot) {
+		/* reboot PIC */
+		c = STATE_REBOOT;
+		write(fd, &c, 1);
+		read(fd, &c, 1);
+		printf("reboot status = %c\n", c);
 	} else {
+		/* erase flash */
+		c = STATE_ERASE_FLASH;
+		write(fd, &c, 1);
+		read(fd, &c, 1);
+		printf("erase status = %c\n", c);
+
 		/* load new program */
 		static const unsigned int buffer_size = 1 + 2 + 4 + 2 + 256 * 2 + 2 + 1;
 		char buffer[buffer_size];
@@ -72,7 +97,11 @@ int main(int argc, char *argv[]) {
 			if (buffer[0] == ':') {
 				/* found record line */
 				static const unsigned int num_tries = 10;
+				bool failed = true;
 				for (unsigned int count = 0; count < num_tries; count++) {
+					if (debug) {
+						printf("Sending %s", buffer);
+					}
 					/* send record line */
 					for (char *ptr = buffer; ((*ptr != '\n') && (*ptr != '\0'));
 							ptr++) {
@@ -82,14 +111,26 @@ int main(int argc, char *argv[]) {
 					read(fd, &c, 1);
 					if (c == '0') {
 						/* checksum OK */
+						if (debug) {
+							printf("OK\n");
+						}
+						failed = false;
 						break;
+					} else {
+						if (debug) {
+							printf("KO\n");
+						}
 					}
+				}
+				if (failed) {
+					goto end;
 				}
 			}
 		}
 		fclose(fp);
 	}
 
+	end:
 	/* restore terminal settings */
 	tcsetattr(fd, TCSANOW, &termios_original);
 	close(fd);

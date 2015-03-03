@@ -1,14 +1,10 @@
-#ifdef __18F26J50
 #include <pic18f26j50.h>
-#endif
-
-#include "main.h"
 
 void uart_setup() {
     TRISCbits.TRISC6 = 0; // Set PORTC bit (RC6 - TX1) as output (transmit)
-    LATCbits.LATC6 = OFF; // Clear PORTC bit (RC6)
+    LATCbits.LATC6 = 0; // Clear PORTC bit (RC6)
     TRISCbits.TRISC7 = 1; // Set PORTC bit (RC7 - RX1) as input (receive)
-    LATCbits.LATC7 = OFF; // Clear PORTC bit (RC7)
+    LATCbits.LATC7 = 0; // Clear PORTC bit (RC7)
 
     // SPBRG = Fosc/4/Baud-1
     // SPBRG = 0x04E1 (9600 baud) - Fosc = 48MHz

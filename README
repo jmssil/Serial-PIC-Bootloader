@@ -1,32 +1,33 @@
 0. Contents
 
-  - bootloader.X: MPLABX project for bootloader (PIC side)
-  - bootloader: Eclipse project for loader (PC side)
+  - bootloader.X: MPLABX project for bootloader
+  - feb.X: MPLABX project for PIC-specific code
+  - loader.cpp: PC-side code for interacting with the bootloader
+  - states.h: definitions for PC/PIC synchronization states
 
 1. Caveats
 
-  The bootloader.X project is prepared for PIC18F26J50, but should run
-  on similar PICs with minimum changes. The bootloader is restrained
-  to ROM addresses 0x0000 to 0x0fff. The guest program should be
-  restricted to ROM addresses 0x1000 to 0xffff, with code offset
-  0x1000.
+  The bootloader.X project is configured for PIC18F26J50 (using
+  library feb2.p1 from feb.X project), but should run on similar PICs
+  with minimum changes. The bootloader is restrained to ROM addresses
+  0x0000 to 0x0fff. The guest program should be restricted to ROM
+  addresses 0x1000 to 0xffff, with code offset 0x1000.
 
-2. Relocate guest program
+2. Relocating guest program
 
   See "Linking PIC18 Bootloaders & Applications"
   (http://www.microchip.com/stellent/groups/sitecomm_sg/documents/devicedoc/en558478.pdf).
 
   Steps:
-    1. project properties
-    2. xc8 linker
-    3. memory model, ROM ranges = 1000-ffff
-    4. additional options, code offset = 1000
+    1. Project properties
+    2. XC8 linker
+    3. Memory model: ROM ranges = 1000-ffff
+    4. Additional options: code offset = 1000
 
-3. PIC side
+3. Bootloader
 
-  - make and program "bootloader" project (with Pickit)
-  - LED1 (configure for your PIC/board) should indicate the bootloader is ready
-  - LED2 will light when receiving the guest program
+  - make and program bootloader.X project (with Pickit)
+  - adjust LED signaling to your development board or remove it
 
 4. Guest program
 
@@ -34,17 +35,27 @@
   (http://en.wikipedia.org/wiki/Intel_HEX) located under
   "dist/default/production".
 
-5. PC side
+5. Loader
 
-  Compile loader with "scons".
+  The loader uses the TCLAP library. Install it with, e.g.:
+
+    sudo apt-get install libtclap-dev
+
+  Compile the loader with g++, e.g.:
+
+    g++ loader.cpp -o loader
 
   To upload a new program, run:
 
-    ./load -f <HEX file> -p <serial port>
+    ./loader -f <HEX file> -p <serial port>
 
   To execute the previously uploaded program, run:
 
-    ./load -x -p <serial port>
+    ./loader -x -p <serial port>
+
+  To reboot the PIC (go back to the bootloader), run:
+
+    ./loader -r -p <serial port>
 
 6. Pitfalls
 

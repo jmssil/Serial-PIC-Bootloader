@@ -1,0 +1,29 @@
+Bootloader:
+
+  1. The previous version had a bug: you could not load a program on
+  top of a previously loaded one. To do that we need to erase the
+  flash memory before writing the new program. The new version does
+  this.
+
+  2. The code related to the PIC has been moved to another MPLABX
+  project, feb.X. There is still some PIC-specific code in uart.c,
+  related to the configuration of the UART.
+
+  3. Definitions for synchronization states between the PC and the PIC
+  have been added in states.h.
+
+  4. Using stdint.h for type width clearness.
+
+  5. Does not execute loaded program in the end. For that to happen, a
+  specific command must be given.
+
+  6. The flash memory writes are now being verified (read and compare
+  after write).
+
+Loader:
+
+  1. Added command for executing the loaded program.
+
+  1. Added command for rebooting the PIC.
+
+  2. Added debug switch.
