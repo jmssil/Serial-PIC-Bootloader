@@ -24,6 +24,6 @@ Loader:
 
   1. Added command for executing the loaded program.
 
-  1. Added command for rebooting the PIC.
+  2. Added command for rebooting the PIC.
 
-  2. Added debug switch.
+  3. Added debug switch.
